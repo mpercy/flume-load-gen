@@ -1,0 +1,20 @@
+Load testing and validation tools for Flume.
+
+At the moment, it caters to TCP-based syslog load testing.
+
+Files:
+bin/start_hammer.sh: start script for the load generator
+bin/stop_hammer.sh: stop script for the load generator
+bin/validate.pl: validates that its input appears as sequential, increasing integers
+bin/pig_validate.sh: runs validate.pl via pig in streaming mode
+bin/sort_results.pl: helper to sort the output of several validate.pl runs concatenated together (only for human readability)
+bin/summarize_results.pl: summarizes the output from concatenated validate.pl runs
+bin/hammer_aggregate.sh: aggregates and prints snapshot from hammer client logs. Best to run this periodically in a loop.
+src/main/pig/validate.pig: pig script to stream validate.pl
+src/main/java/org/apache/flume/tcphammer/Hammer.java: load testing tool
+
+Notes:
+To build the load generator, just run mvn clean package; it will leave an executable jar in target/
+pig_validate.sh will store a bunch of files on HDFS, then you can just do hadoop fs -cat hdfs://output_dir > results.txt
+If you want it to be pretty (sorted) so you can make sense of it, run ./bin/sort_results.pl < results.txt > results-sorted.txt
+If you want to get a summary of the results, run ./bin/summarize_results.pl < results.txt | grep -v DEBUG > summary.txt
