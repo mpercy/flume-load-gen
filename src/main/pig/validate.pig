@@ -21,10 +21,12 @@ REGISTER avro-tools.jar
 REGISTER piggybank.jar
 REGISTER json-simple.jar
 
+DEFINE validate_script `validate.pl` SHIP('$SCRIPT');
+
 records = LOAD '$INPUT' USING org.apache.pig.piggybank.storage.avro.AvroStorage ();
 /* DUMP records; */
 fields = FOREACH records GENERATE headers#'timestamp' as timestamp:bytearray, headers#'host' as host:bytearray, body as body:bytearray;
 /* can't concat byte arrays in pig - need a UDF to do this "properly" */
 /* content = FOREACH fields GENERATE CONCAT(timestamp, ' ', host, ' ',  body) as body:bytearray; */
-reports = STREAM fields THROUGH `$SCRIPT`;
+reports = STREAM fields THROUGH validate_script;
 STORE reports INTO '$OUTPUT';
