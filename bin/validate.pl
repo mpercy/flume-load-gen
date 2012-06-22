@@ -22,6 +22,7 @@
 #
 use strict;
 use warnings;
+use JSON qw(decode_json);
 use Data::Dumper qw(Dumper);
 
 my %stats = ();
@@ -83,12 +84,35 @@ sub print_stats() {
 
 ###############
 
+if (@ARGV && $ARGV[0] =~ /^--?h(elp)?$/) {
+  shift @ARGV;
+  die <<"EOF";
+Usage: $0 [options] [files]
+Options: -h, --help : display this help
+         -j, --json : Parse json input instead of normal pig-formatted text
+EOF
+}
+
+my $jsonMode = 0;
+if (@ARGV && $ARGV[0] =~ /^--?j(son)?$/) {
+  shift @ARGV;
+  $jsonMode = 1;
+}
+
 my $line;
 while (defined($line = <>)) {
   chomp $line;
-  my @fields = split /\s+/, $line;
-  my $host = $fields[1] . "/" . $fields[2];
-  my $num = int($fields[3]);
+  my ($host, $num);
+  if (!$jsonMode) {
+    my @fields = split /\s+/, $line;
+    $host = $fields[1] . "/" . $fields[2];
+    $num = int($fields[3]);
+  } else {
+    my $record = decode_json($line);
+    my @fields = split /\s+/, $record->{"body"};
+    $host = $record->{"headers"}->{"host"} . "/" . $fields[0];
+    $num = int($fields[1]);
+  }
   cache($host, $num);
   validate($host, $num);
 }
